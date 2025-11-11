@@ -27,6 +27,33 @@ class ChatbotChain:
         # Khởi tạo session storage cho context
         self.session_storage = {}
 
+    @staticmethod
+    def _is_laptop_category(category_id: Optional[int]) -> bool:
+        """Giới hạn sản phẩm về đúng nhóm Laptop (id 2 và các nhóm con trong sample)."""
+        if category_id is None:
+            return False
+        return category_id in {2, 5, 6, 7, 8, 9}
+
+    def _summarize_products(self, products: List[Dict], max_items: int = 5) -> str:
+        """Tóm tắt danh sách sản phẩm cho prompt model"""
+        if not products:
+            return "Không có sản phẩm liên quan."
+        lines = []
+        for i, p in enumerate(products[:max_items], 1):
+            name = p.get('name', '').strip()
+            price = p.get('price', 0)
+            category = p.get('category_name', 'Laptop')
+            desc = (p.get('description') or '').strip()
+            # Lấy vài đặc điểm từ mô tả
+            key_specs = []
+            lower = desc.lower()
+            for key in ['i3', 'i5', 'i7', 'ryzen', '8gb', '16gb', 'ssd', 'rtx', 'gtx', 'ips', '144hz']:
+                if key in lower:
+                    key_specs.append(key.upper())
+            specs_str = ", ".join(dict.fromkeys(key_specs)) if key_specs else ""
+            lines.append(f"{i}) {name} | {price:,.0f}đ | {category}" + (f" | {specs_str}" if specs_str else ""))
+        return "\n".join(lines)
+
     def save_context(self, session_id: str):
         """Lưu context vào session storage"""
         if session_id:
@@ -271,7 +298,8 @@ class ChatbotChain:
                             products = self.db.search_products(" ".join(base_model))
                         
                         if products:
-                            return products
+                            # Chỉ giữ sản phẩm thuộc nhóm Laptop
+                            return [p for p in products if self._is_laptop_category(p.get('category_id'))]
             
             # Tìm theo khoảng giá
             if extracted_info['price_range']:
@@ -282,7 +310,7 @@ class ChatbotChain:
                     extracted_info['category_id']
                 )
                 if products:
-                    return products
+                    return [p for p in products if self._is_laptop_category(p.get('category_id'))]
             
             # Tìm theo category
             if extracted_info['category_id']:
@@ -290,12 +318,13 @@ class ChatbotChain:
                     extracted_info['category_id']
                 )
                 if products:
-                    return products
+                    return [p for p in products if self._is_laptop_category(p.get('category_id'))]
             
             # Tìm theo từ khóa
             if extracted_info['keywords']:
                 keyword = ' '.join(extracted_info['keywords'])
-                return self.db.search_products(keyword)
+                products = self.db.search_products(keyword)
+                return [p for p in products if self._is_laptop_category(p.get('category_id'))]
                 
             return []
             
@@ -483,7 +512,51 @@ class ChatbotChain:
             else:
                 # Không có thông tin gì
                 response = self.formatter.format_general_laptop_request()
-            
+
+            # Thử dùng Gemini để viết lại câu trả lời dựa trên dữ liệu thật
+            try:
+                top_products = products[:5]
+                product_block = self._summarize_products(top_products)
+                promotions = []
+                try:
+                    self.db.connect()
+                    promotions = self.db.get_active_promotions()
+                finally:
+                    self.db.disconnect()
+                promo_block = ""
+                if promotions:
+                    promo_lines = [f"- {p['code']}: giảm {p['discount_amount']}%, tối thiểu {p['min_order_amount']:,.0f}đ"
+                                   for p in promotions[:5]]
+                    promo_block = "Khuyến mãi đang áp dụng:\n" + "\n".join(promo_lines)
+
+                price_text = ""
+                if extracted_info['price_range']:
+                    mn, mx = extracted_info['price_range']
+                    price_text = f"Khoảng giá quan tâm: {mn:,.0f}đ - {mx:,.0f}đ."
+
+                purpose_text = ""
+                if extracted_info['keywords']:
+                    purpose_text = "Nhu cầu: " + ", ".join(extracted_info['keywords']) + "."
+
+                system_prompt = (
+                    "Bạn là chuyên viên tư vấn laptop. Trả lời ngắn gọn, súc tích, thực dụng, "
+                    "ưu tiên đề xuất cụ thể từ danh sách sản phẩm cung cấp, kèm gợi ý vì sao phù hợp. "
+                    "Nếu dữ liệu ít, hỏi thêm thông tin cần thiết."
+                )
+                user_prompt = (
+                    f"Yêu cầu của khách: {message}\n"
+                    f"{price_text}\n{purpose_text}\n\n"
+                    f"Danh sách sản phẩm liên quan:\n{product_block}\n\n"
+                    f"{promo_block}\n\n"
+                    "Hãy trả lời bằng tiếng Việt, có bullet rõ ràng, tối đa ~8 dòng."
+                )
+                gemini_resp = self.model.generate_content([system_prompt, user_prompt])
+                if hasattr(gemini_resp, "text") and gemini_resp.text:
+                    response = gemini_resp.text.strip()
+            except Exception as _:
+                # Giữ nguyên response fallback nếu model lỗi
+                pass
+
             if session_id:
                 self.save_context(session_id)
             return response, context
