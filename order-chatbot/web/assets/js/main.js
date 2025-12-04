@@ -8,6 +8,8 @@ async function sendMessage() {
     appendMessage(message, false);
     input.value = '';
 
+    const typingIndicator = showTypingIndicator();
+
     try {
         const response = await fetch(`${API_URL}/chat`, {
             method: 'POST',
@@ -25,6 +27,7 @@ async function sendMessage() {
         }
 
         const data = await response.json();
+        await delayResponse();
         
         // Kiểm tra loại response
         if (data.type === 'error') {
@@ -37,6 +40,8 @@ async function sendMessage() {
     } catch (error) {
         console.error('Error:', error);
         appendMessage('Xin lỗi, có lỗi xảy ra!', true, 'error');
+    } finally {
+        removeTypingIndicator(typingIndicator);
     }
 }
 
@@ -57,6 +62,26 @@ function appendMessage(message, isBot, type = 'text') {
     
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function showTypingIndicator() {
+    const chatMessages = document.getElementById('chat-messages');
+    const indicator = document.createElement('div');
+    indicator.className = 'message bot typing';
+    indicator.innerHTML = '...';
+    chatMessages.appendChild(indicator);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return indicator;
+}
+
+function removeTypingIndicator(indicator) {
+    if (indicator && indicator.parentNode) {
+        indicator.parentNode.removeChild(indicator);
+    }
+}
+
+function delayResponse(duration = 1200) {
+    return new Promise(resolve => setTimeout(resolve, duration));
 }
 
 // Thêm sự kiện Enter để gửi tin nhắn
