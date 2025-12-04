@@ -3,7 +3,7 @@ session_start();
 
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'Trung@2025');
 define('DB_NAME', 'chatbot_db');
 
 // API URL

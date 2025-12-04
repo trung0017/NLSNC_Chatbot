@@ -411,6 +411,122 @@ class ChatbotChain:
 • Hoặc cho em biết nhu cầu sử dụng và ngân sách
 để em tư vấn các model phù hợp và có khả năng nâng cấp tốt ạ.""", context
             
+            # Xử lý câu hỏi về laptop mới nhất
+            latest_patterns = [
+                r'laptop.*mới.*nhất',
+                r'laptop.*mới',
+                r'máy.*mới.*nhất',
+                r'máy.*mới',
+                r'sản phẩm.*mới.*nhất',
+                r'sản phẩm.*mới',
+                r'giới thiệu.*laptop.*mới',
+                r'giới thiệu.*máy.*mới',
+                r'có.*laptop.*mới.*nào',
+                r'laptop.*mới.*ra',
+                r'mới.*ra.*laptop'
+            ]
+            
+            if any(re.search(pattern, normalized_msg) for pattern in latest_patterns):
+                try:
+                    self.db.connect()
+                    latest_products = self.db.get_latest_products(limit=5)
+                    response = self.formatter.format_latest_products(latest_products)
+                    if session_id:
+                        self.save_context(session_id)
+                    return response, context
+                except Exception as e:
+                    print(f"Error getting latest products: {str(e)}")
+                    return self.formatter.format_error_with_suggestions("general"), context
+                finally:
+                    self.db.disconnect()
+            
+            # Xử lý câu hỏi so sánh Windows vs Mac
+            windows_mac_patterns = [
+                r'so sánh.*windows.*mac',
+                r'so sánh.*mac.*windows',
+                r'windows.*mac.*khác.*nhau',
+                r'mac.*windows.*khác.*nhau',
+                r'nên.*chọn.*windows.*hay.*mac',
+                r'nên.*chọn.*mac.*hay.*windows',
+                r'windows.*và.*mac',
+                r'mac.*và.*windows',
+                r'sự khác.*windows.*mac',
+                r'sự khác.*mac.*windows'
+            ]
+            
+            if any(re.search(pattern, normalized_msg) for pattern in windows_mac_patterns):
+                try:
+                    self.db.connect()
+                    windows_products = self.db.get_windows_laptops(limit=3)
+                    mac_products = self.db.get_mac_laptops(limit=3)
+                    response = self.formatter.format_windows_vs_mac_comparison(windows_products, mac_products)
+                    if session_id:
+                        self.save_context(session_id)
+                    return response, context
+                except Exception as e:
+                    print(f"Error getting Windows/Mac products: {str(e)}")
+                    return self.formatter.format_error_with_suggestions("general"), context
+                finally:
+                    self.db.disconnect()
+            
+            # Xử lý câu hỏi so sánh chip (M3 vs M4, M4 vs M4 Pro, etc.)
+            chip_comparison_patterns = [
+                r'so sánh.*m3.*m4',
+                r'so sánh.*m4.*m3',
+                r'so sánh.*m4.*m4.*pro',
+                r'so sánh.*m4.*pro.*m4',
+                r'so sánh.*m4.*m4.*max',
+                r'so sánh.*m4.*max.*m4',
+                r'm3.*m4.*khác.*nhau',
+                r'm4.*m3.*khác.*nhau',
+                r'm4.*m4.*pro.*khác.*nhau',
+                r'nên.*chọn.*m3.*hay.*m4',
+                r'nên.*chọn.*m4.*hay.*m3',
+                r'nên.*chọn.*m4.*hay.*m4.*pro',
+                r'm4.*và.*m4.*pro',
+                r'm4.*pro.*và.*m4'
+            ]
+            
+            if any(re.search(pattern, normalized_msg) for pattern in chip_comparison_patterns):
+                try:
+                    self.db.connect()
+                    # Extract chip names from message
+                    chip1 = None
+                    chip2 = None
+                    
+                    # Tìm M3, M4, M4 Pro, M4 Max trong message
+                    if re.search(r'm3', normalized_msg, re.IGNORECASE):
+                        chip1 = 'M3'
+                    if re.search(r'm4.*pro', normalized_msg, re.IGNORECASE):
+                        chip2 = 'M4 Pro'
+                    elif re.search(r'm4.*max', normalized_msg, re.IGNORECASE):
+                        chip2 = 'M4 Max'
+                    elif re.search(r'm4', normalized_msg, re.IGNORECASE):
+                        if not chip1:
+                            chip1 = 'M4'
+                        else:
+                            chip2 = 'M4'
+                    
+                    # Nếu không tìm thấy, mặc định so sánh M3 vs M4
+                    if not chip1:
+                        chip1 = 'M3'
+                    if not chip2:
+                        chip2 = 'M4'
+                    
+                    # Lấy sản phẩm có chip tương ứng
+                    products1 = self.db.get_products_by_chip(chip1, limit=3)
+                    products2 = self.db.get_products_by_chip(chip2, limit=3)
+                    
+                    response = self.formatter.format_chip_comparison(chip1, chip2, products1, products2)
+                    if session_id:
+                        self.save_context(session_id)
+                    return response, context
+                except Exception as e:
+                    print(f"Error getting chip comparison: {str(e)}")
+                    return self.formatter.format_error_with_suggestions("general"), context
+                finally:
+                    self.db.disconnect()
+            
             # Xử lý câu chào
             greetings = {
                 'xin chào', 'xin chao', 'chào', 'chao',

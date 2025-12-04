@@ -629,4 +629,229 @@ Em sẽ tư vấn thêm các model phù hợp với nhu cầu của anh/chị.""
 
 Em sẽ gợi ý các model phù hợp với nhu cầu của anh/chị."""
         else:
-            return ResponseFormatter.format_general_laptop_request() 
+            return ResponseFormatter.format_general_laptop_request()
+
+    @staticmethod
+    def format_latest_products(products: List[Dict]) -> str:
+        """Format giới thiệu về laptop mới nhất"""
+        if not products:
+            return """Dạ, hiện tại em chưa có thông tin về laptop mới nhất trong hệ thống.
+
+Anh/chị có thể cho em biết:
+• Mục đích sử dụng laptop
+• Khoảng giá mong muốn
+để em tư vấn các sản phẩm phù hợp ạ."""
+        
+        response = """Dạ, em xin giới thiệu các laptop mới nhất hiện có trong hệ thống:
+
+"""
+        response += ResponseFormatter.format_product_list(products, show_category=True)
+        
+        response += """
+
+💡 Các laptop mới nhất thường có:
+• Cấu hình hiện đại, hiệu năng mạnh mẽ
+• Thiết kế tinh tế, mỏng nhẹ
+• Pin lâu, tản nhiệt tốt
+• Giá cả hợp lý, nhiều khuyến mãi
+
+Anh/chị quan tâm đến model nào, em có thể tư vấn chi tiết hơn ạ!"""
+        
+        return response
+
+    @staticmethod
+    def format_windows_vs_mac_comparison(windows_products: List[Dict], mac_products: List[Dict]) -> str:
+        """Format so sánh Windows và Mac"""
+        response = """Dạ, em xin so sánh giữa laptop Windows và MacBook để anh/chị tham khảo:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💻 LAPTOP WINDOWS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Ưu điểm:
+• Đa dạng về thương hiệu và mức giá (Dell, HP, ASUS, Lenovo, MSI, Acer...)
+• Tương thích tốt với phần mềm Windows phổ biến
+• Dễ dàng nâng cấp phần cứng (RAM, SSD)
+• Nhiều lựa chọn về cấu hình và giá cả
+• Phù hợp cho gaming với card đồ họa rời mạnh
+• Hỗ trợ nhiều cổng kết nối
+
+⚠️ Nhược điểm:
+• Thời lượng pin thường ngắn hơn Mac
+• Có thể bị nhiễm virus nếu không cẩn thận
+• Một số model có thể nặng và dày hơn
+
+"""
+        
+        if windows_products:
+            response += "📱 Một số laptop Windows phổ biến:\n"
+            for i, product in enumerate(windows_products[:3], 1):
+                response += f"{i}. {product['name']} - {ResponseFormatter.format_price(product['price'])}\n"
+            response += "\n"
+        
+        response += """━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🍎 MACBOOK (macOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Ưu điểm:
+• Hiệu năng mạnh mẽ với chip Apple Silicon (M1, M2, M3, M4)
+• Thời lượng pin cực kỳ lâu (10-20 giờ sử dụng)
+• Thiết kế mỏng nhẹ, sang trọng
+• Màn hình Retina sắc nét, màu sắc chính xác
+• Hệ điều hành macOS ổn định, ít bị virus
+• Tích hợp tốt với hệ sinh thái Apple (iPhone, iPad)
+• Tản nhiệt tốt, ít nóng máy
+
+⚠️ Nhược điểm:
+• Giá thành cao hơn laptop Windows cùng cấu hình
+• Khó nâng cấp phần cứng (RAM, SSD thường được hàn cứng)
+• Ít lựa chọn về game (một số game không hỗ trợ macOS)
+• Số lượng cổng kết nối hạn chế (thường cần adapter)
+
+"""
+        
+        if mac_products:
+            response += "📱 Một số MacBook phổ biến:\n"
+            for i, product in enumerate(mac_products[:3], 1):
+                response += f"{i}. {product['name']} - {ResponseFormatter.format_price(product['price'])}\n"
+            response += "\n"
+        
+        response += """━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 KHUYẾN NGHỊ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Chọn Windows nếu:
+• Cần laptop giá rẻ, nhiều lựa chọn
+• Sử dụng phần mềm Windows chuyên dụng
+• Chơi game nhiều
+• Cần nâng cấp phần cứng thường xuyên
+
+Chọn MacBook nếu:
+• Cần hiệu năng cao, pin lâu
+• Làm việc với đồ họa, video, thiết kế
+• Đã sử dụng iPhone, iPad
+• Ưu tiên thiết kế và trải nghiệm người dùng
+
+Anh/chị có thể cho em biết mục đích sử dụng và ngân sách để em tư vấn model cụ thể phù hợp nhất ạ!"""
+        
+        return response
+
+    @staticmethod
+    def format_chip_comparison(chip1: str, chip2: str, products1: List[Dict], products2: List[Dict]) -> str:
+        """Format so sánh giữa các chip (M3 vs M4, M4 vs M4 Pro, etc.)"""
+        # Normalize chip names
+        chip1_upper = chip1.upper()
+        chip2_upper = chip2.upper()
+        
+        # Thông tin về các chip Apple Silicon
+        chip_info = {
+            'M3': {
+                'name': 'Apple M3',
+                'cores': '8-core CPU, 10-core GPU',
+                'performance': 'Hiệu năng tốt, phù hợp đa số người dùng',
+                'use_case': 'Làm việc văn phòng, học tập, chỉnh sửa ảnh/video cơ bản'
+            },
+            'M4': {
+                'name': 'Apple M4',
+                'cores': '10-core CPU, 10-core GPU',
+                'performance': 'Hiệu năng mạnh hơn M3 khoảng 20-30%',
+                'use_case': 'Xử lý đa nhiệm, chỉnh sửa video 4K, thiết kế đồ họa'
+            },
+            'M4 PRO': {
+                'name': 'Apple M4 Pro',
+                'cores': '12-core CPU, 19-core GPU',
+                'performance': 'Hiệu năng cao cấp, mạnh hơn M4 đáng kể',
+                'use_case': 'Render video 8K, thiết kế 3D, phát triển phần mềm nặng'
+            },
+            'M4 MAX': {
+                'name': 'Apple M4 Max',
+                'cores': '16-core CPU, 38-core GPU',
+                'performance': 'Hiệu năng cực mạnh, dành cho chuyên gia',
+                'use_case': 'Workstation, render phim, AI/ML, phát triển game'
+            }
+        }
+        
+        info1 = chip_info.get(chip1_upper, {})
+        info2 = chip_info.get(chip2_upper, {})
+        
+        response = f"""Dạ, em xin so sánh giữa chip {chip1_upper} và {chip2_upper}:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 {info1.get('name', chip1_upper)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+        
+        if info1:
+            response += f"""• Cấu hình: {info1.get('cores', 'N/A')}
+• Hiệu năng: {info1.get('performance', 'N/A')}
+• Phù hợp cho: {info1.get('use_case', 'N/A')}
+"""
+        else:
+            response += f"• Chip {chip1_upper} là thế hệ chip Apple Silicon mới nhất\n"
+        
+        if products1:
+            response += f"\n📱 Laptop có chip {chip1_upper}:\n"
+            for i, product in enumerate(products1[:3], 1):
+                response += f"{i}. {product['name']} - {ResponseFormatter.format_price(product['price'])}\n"
+        
+        response += f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 {info2.get('name', chip2_upper)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+        
+        if info2:
+            response += f"""• Cấu hình: {info2.get('cores', 'N/A')}
+• Hiệu năng: {info2.get('performance', 'N/A')}
+• Phù hợp cho: {info2.get('use_case', 'N/A')}
+"""
+        else:
+            response += f"• Chip {chip2_upper} là thế hệ chip Apple Silicon mới nhất\n"
+        
+        if products2:
+            response += f"\n📱 Laptop có chip {chip2_upper}:\n"
+            for i, product in enumerate(products2[:3], 1):
+                response += f"{i}. {product['name']} - {ResponseFormatter.format_price(product['price'])}\n"
+        
+        response += """
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 SO SÁNH TỔNG QUAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"""
+        
+        # So sánh cụ thể
+        if chip1_upper == 'M3' and chip2_upper == 'M4':
+            response += """• M4 mạnh hơn M3 khoảng 20-30% về hiệu năng CPU và GPU
+• M4 có hiệu quả năng lượng tốt hơn, pin lâu hơn
+• M4 hỗ trợ tốt hơn cho AI và machine learning
+• M4 phù hợp hơn cho các tác vụ nặng như render video 4K/8K
+
+→ Nếu ngân sách cho phép, nên chọn M4 để có hiệu năng tốt hơn và tương lai hơn."""
+        
+        elif chip1_upper == 'M4' and chip2_upper == 'M4 PRO':
+            response += """• M4 Pro có nhiều lõi GPU hơn (19-core vs 10-core), xử lý đồ họa mạnh hơn đáng kể
+• M4 Pro phù hợp cho các công việc chuyên nghiệp: render video 8K, thiết kế 3D
+• M4 Pro có bộ nhớ thống nhất lớn hơn, xử lý đa nhiệm tốt hơn
+• M4 thông thường đã đủ dùng cho đa số người dùng
+
+→ Chọn M4 Pro nếu làm việc chuyên nghiệp với video/đồ họa. M4 đã đủ cho hầu hết nhu cầu."""
+        
+        elif chip1_upper == 'M4' and chip2_upper == 'M4 MAX':
+            response += """• M4 Max là phiên bản mạnh nhất, có 38 lõi GPU
+• M4 Max phù hợp cho workstation, render phim chuyên nghiệp
+• M4 Max có bộ nhớ thống nhất lên đến 128GB
+• Giá thành M4 Max cao hơn đáng kể
+
+→ Chọn M4 Max chỉ khi thực sự cần hiệu năng cực mạnh cho công việc chuyên nghiệp."""
+        
+        else:
+            response += f"""• {chip2_upper} thường là phiên bản nâng cấp của {chip1_upper}
+• {chip2_upper} có hiệu năng và hiệu quả năng lượng tốt hơn
+• Nên chọn {chip2_upper} nếu ngân sách cho phép để có trải nghiệm tốt hơn"""
+        
+        response += """
+
+Anh/chị có thể cho em biết mục đích sử dụng cụ thể để em tư vấn model phù hợp nhất ạ!"""
+        
+        return response 
