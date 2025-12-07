@@ -185,4 +185,102 @@ class DatabaseUtils:
         """Lấy training data theo category"""
         query = "SELECT * FROM training_data WHERE category = %s"
         self.cursor.execute(query, (category,))
-        return self.cursor.fetchall() 
+        return self.cursor.fetchall()
+
+    def get_latest_products(self, limit: int = 5) -> List[Dict]:
+        """Lấy các laptop mới nhất (sắp xếp theo created_at DESC)"""
+        query = """
+        SELECT 
+            p.*,
+            c.name as category_name,
+            c.id as category_id
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.status = 'active'
+        ORDER BY p.created_at DESC
+        LIMIT %s
+        """
+        try:
+            self.cursor.execute(query, (limit,))
+            results = self.cursor.fetchall()
+            # Format category names
+            for result in results:
+                result['category_name'] = self._format_category_name(result.get('category_name'))
+            return results
+        except Exception as e:
+            print(f"Error in get_latest_products: {str(e)}")
+            return []
+
+    def get_windows_laptops(self, limit: int = 5) -> List[Dict]:
+        """Lấy các laptop Windows (không phải Mac)"""
+        query = """
+        SELECT 
+            p.*,
+            c.name as category_name,
+            c.id as category_id
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.status = 'active'
+        AND (p.name NOT LIKE '%Mac%' AND p.name NOT LIKE '%MacBook%')
+        AND (p.description NOT LIKE '%Mac%' OR p.description IS NULL)
+        ORDER BY p.price ASC
+        LIMIT %s
+        """
+        try:
+            self.cursor.execute(query, (limit,))
+            results = self.cursor.fetchall()
+            for result in results:
+                result['category_name'] = self._format_category_name(result.get('category_name'))
+            return results
+        except Exception as e:
+            print(f"Error in get_windows_laptops: {str(e)}")
+            return []
+
+    def get_mac_laptops(self, limit: int = 5) -> List[Dict]:
+        """Lấy các laptop Mac (MacBook)"""
+        query = """
+        SELECT 
+            p.*,
+            c.name as category_name,
+            c.id as category_id
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.status = 'active'
+        AND (p.name LIKE '%Mac%' OR p.name LIKE '%MacBook%')
+        ORDER BY p.price ASC
+        LIMIT %s
+        """
+        try:
+            self.cursor.execute(query, (limit,))
+            results = self.cursor.fetchall()
+            for result in results:
+                result['category_name'] = self._format_category_name(result.get('category_name'))
+            return results
+        except Exception as e:
+            print(f"Error in get_mac_laptops: {str(e)}")
+            return []
+
+    def get_products_by_chip(self, chip_name: str, limit: int = 5) -> List[Dict]:
+        """Lấy các laptop theo chip (M3, M4, M4 Pro, etc.)"""
+        query = """
+        SELECT 
+            p.*,
+            c.name as category_name,
+            c.id as category_id
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.status = 'active'
+        AND (p.name LIKE %s OR p.description LIKE %s)
+        ORDER BY p.price ASC
+        LIMIT %s
+        """
+        try:
+            search_term = f"%{chip_name}%"
+            self.cursor.execute(query, (search_term, search_term, limit))
+            results = self.cursor.fetchall()
+            for result in results:
+                result['category_name'] = self._format_category_name(result.get('category_name'))
+            return results
+        except Exception as e:
+            print(f"Error in get_products_by_chip: {str(e)}")
+            return [] 

@@ -10,19 +10,23 @@ body {
 }
 
 .chat-container {
-    max-width: 800px;
+    max-width: 1200px;
+    width: 95%;
     margin: 20px auto;
-    padding: 20px;
+    padding: 30px;
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 10px;
+    background-color: #fafafa;
 }
 
 .chat-messages {
-    height: 400px;
+    height: 600px;
     overflow-y: auto;
-    padding: 10px;
+    padding: 20px;
     border: 1px solid #eee;
     margin-bottom: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
 }
 
 .chat-input {
@@ -32,25 +36,45 @@ body {
 
 .chat-input input {
     flex: 1;
-    padding: 10px;
+    padding: 12px 15px;
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.chat-input input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .chat-input button {
-    padding: 10px 20px;
+    padding: 12px 30px;
     background: #007bff;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.chat-input button:hover {
+    background: #0056b3;
+}
+
+.chat-input button:active {
+    transform: scale(0.98);
 }
 
 .message {
-    margin: 10px 0;
-    padding: 10px;
-    border-radius: 5px;
-    max-width: 80%;
+    margin: 15px 0;
+    padding: 15px 20px;
+    border-radius: 10px;
+    max-width: 90%;
+    word-wrap: break-word;
+    line-height: 1.6;
 }
 
 .message.user {
@@ -62,6 +86,11 @@ body {
 .message.bot {
     background-color: #f1f1f1;
     margin-right: auto;
+}
+
+.message.typing {
+    font-style: italic;
+    opacity: 0.7;
 }
 
 .message.error {
@@ -119,4 +148,23 @@ body {
 
 .product-card button:hover {
     background: #0056b3;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    .chat-container {
+        width: 100%;
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    .chat-messages {
+        height: 500px;
+        padding: 15px;
+    }
+    
+    .message {
+        max-width: 95%;
+        padding: 12px 15px;
+    }
 } 
